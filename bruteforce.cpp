@@ -66,11 +66,6 @@ int main() {
     // Example usage
     numCities = 4;
 
-    // Generate random integer coordinates for the cities
-    random_device rd;
-    mt19937 gen(rd());
-    uniform_int_distribution<int> dist(1, 100); // Adjust the range of coordinates as needed
-
     vector<vector<double>> distances(numCities, vector<double>(numCities));
     distances = {
         {0.0, 2.0, 9.0, 5.0},
