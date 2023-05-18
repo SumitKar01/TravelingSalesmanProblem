@@ -82,6 +82,8 @@ void tspBruteForce(const vector<pair<int, int>>& cities) {
     cout << "Cities' Coordinates:" << endl;
     for (int i = 0; i < numCities; ++i) {
         cout << "City " << i << ": (" << cities[i].first << ", " << cities[i].second << ")" << endl;
+
+
     }
 
     plotResults(cities, minTour);
