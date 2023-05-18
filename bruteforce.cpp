@@ -4,21 +4,10 @@
 #include <cmath>
 #include <limits>
 #include <random>
-#include "matplotlibcpp.h"
-
-namespace plt = matplotlibcpp;
 
 using namespace std;
 
 int numCities;
-
-
-// Function to calculate the Euclidean distance between two cities
-double calcDistance(pair<int, int> city1, pair<int, int> city2) {
-    double xDiff = city1.first - city2.first;
-    double yDiff = city1.second - city2.second;
-    return sqrt(pow(xDiff,2) + pow(yDiff, 2));
-}
 
 // Function to calculate the total distance of a tour
 double calcTourDistance(const vector<int>& tour, const vector<vector<double>>& distances) {
@@ -30,7 +19,6 @@ double calcTourDistance(const vector<int>& tour, const vector<vector<double>>& d
     totalDistance += distances[tour[numCities - 1]][tour[0]];
     return totalDistance;
 }
-// Plot the cities and the minimum tour
 
 // Brute force method to solve the TSP
 void tspBruteForce(const vector<vector<double>>& distances) {
