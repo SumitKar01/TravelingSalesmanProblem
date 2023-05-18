@@ -65,7 +65,8 @@ void tspBruteForce(const vector<vector<double>>& distances) {
 
 int main() {
     // Example usage
-    numCities = 4;
+    cout << "Enter the number of cities: ";
+    cin >> numCities;
 
     // Generate random integer coordinates for the cities
     random_device rd;
