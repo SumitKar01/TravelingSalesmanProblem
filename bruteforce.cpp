@@ -93,11 +93,6 @@ int main() {
     // Example usage
     numCities = 5;
 
-    // Generate random integer coordinates for the cities
-    random_device rd;
-    mt19937 gen(rd());
-    uniform_int_distribution<int> dist(0, 10); // Adjust the range of coordinates as needed
-
     vector<pair<int, int>> cities(numCities);
     cities = { {0, 0}, {1, 1}, {2, 3}, {5, 2}, {7, 4} };
 
