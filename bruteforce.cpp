@@ -17,7 +17,7 @@ int numCities;
 double calcDistance(pair<int, int> city1, pair<int, int> city2) {
     double xDiff = city1.first - city2.first;
     double yDiff = city1.second - city2.second;
-    return sqrt(xDiff * xDiff + yDiff * yDiff);
+    return sqrt(pow(xDiff,2) + pow(yDiff, 2));
 }
 
 // Function to calculate the total distance of a tour
@@ -30,7 +30,7 @@ double calcTourDistance(const vector<int>& tour, const vector<pair<int, int>>& c
     totalDistance += calcDistance(cities[tour[numCities - 1]], cities[tour[0]]);
     return totalDistance;
 }
-// Plot the cities and the optimal tour
+// Plot the cities and the minimum tour
 void plotResults(const vector<pair<int, int>>& cities, vector<int> minTour) {
     vector<double> xCoords, yCoords;
     for (int i = 0; i < numCities; ++i) {
@@ -38,14 +38,14 @@ void plotResults(const vector<pair<int, int>>& cities, vector<int> minTour) {
     }
     plt::plot(xCoords, yCoords, "bo");
 
-    vector<double> optXTour, optYTour;
+    vector<double> minXTour, minYTour;
     for (int city : minTour) {
-        optXTour.push_back(cities[city].first);
-        optYTour.push_back(cities[city].second);
+        minXTour.push_back(cities[city].first);
+        minYTour.push_back(cities[city].second);
     }
-    optXTour.push_back(cities[minTour[0]].first);
-    optYTour.push_back(cities[minTour[0]].second);
-    plt::plot(optXTour, optYTour, "r-");
+    minXTour.push_back(cities[minTour[0]].first);
+    minYTour.push_back(cities[minTour[0]].second);
+    plt::plot(minXTour, minYTour, "r-");
 
     plt::show();
 }
@@ -70,13 +70,13 @@ void tspBruteForce(const vector<pair<int, int>>& cities) {
         }
     } while (next_permutation(tour.begin() + 1, tour.end()));
 
-    // Output the optimal tour and its distance
-    cout << "Optimal Tour: ";
+    // Output the minimum tour and its distance
+    cout << "Minimum Tour: ";
     for (int city : minTour) {
         cout << city << " ";
     }
     cout << endl;
-    cout << "Optimal Distance: " << minDistance << endl;
+    cout << "Minimum Distance: " << minDistance << endl;
 
     // Print the cities' coordinates
     cout << "Cities' Coordinates:" << endl;
