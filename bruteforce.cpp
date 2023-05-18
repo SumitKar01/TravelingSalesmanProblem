@@ -87,7 +87,9 @@ int main() {
     for (int i = 0; i < numCities; ++i) {
         for (int j = 0; j < numCities; ++j) {
             if (i != j) {
-                distances[i][j] = dist(gen);
+                double distance = dist(gen);
+                distances[i][j] = distance;
+                distances[j][i] = distance;
             }
         }
     }
