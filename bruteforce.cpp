@@ -91,8 +91,7 @@ void tspBruteForce(const vector<pair<int, int>>& cities) {
 
 int main() {
     // Example usage
-    cout << "Enter the number of cities: ";
-    cin >> numCities;
+    numCities = 5;
 
     // Generate random integer coordinates for the cities
     random_device rd;
@@ -100,10 +99,7 @@ int main() {
     uniform_int_distribution<int> dist(0, 10); // Adjust the range of coordinates as needed
 
     vector<pair<int, int>> cities(numCities);
-    for (int i = 0; i < numCities; ++i) {
-        cities[i].first = dist(gen);
-        cities[i].second = dist(gen);
-    }
+    cities = { {0, 0}, {1, 1}, {2, 3}, {5, 2}, {7, 4} };
 
     tspBruteForce(cities);
 
