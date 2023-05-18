@@ -10,6 +10,9 @@ namespace plt = matplotlibcpp;
 
 using namespace std;
 
+int numCities;
+
+
 // Function to calculate the Euclidean distance between two cities
 double calcDistance(pair<int, int> city1, pair<int, int> city2) {
     double xDiff = city1.first - city2.first;
@@ -18,7 +21,7 @@ double calcDistance(pair<int, int> city1, pair<int, int> city2) {
 }
 
 // Function to calculate the total distance of a tour
-double calcTourDistance(const vector<int>& tour, const vector<pair<int, int>>& cities, int numCities) {
+double calcTourDistance(const vector<int>& tour, const vector<pair<int, int>>& cities) {
     double totalDistance = 0.0;
     for (int i = 0; i < numCities - 1; ++i) {
         totalDistance += calcDistance(cities[tour[i]], cities[tour[i + 1]]);
@@ -28,7 +31,7 @@ double calcTourDistance(const vector<int>& tour, const vector<pair<int, int>>& c
     return totalDistance;
 }
 // Plot the cities and the optimal tour
-void plotResults(const vector<pair<int, int>>& cities, int numCities, vector<int> minTour) {
+void plotResults(const vector<pair<int, int>>& cities, vector<int> minTour) {
     vector<double> xCoords, yCoords;
     for (int i = 0; i < numCities; ++i) {
         plt::text(cities[i].first, cities[i].second, to_string(i));
@@ -47,7 +50,7 @@ void plotResults(const vector<pair<int, int>>& cities, int numCities, vector<int
     plt::show();
 }
 // Brute force method to solve the TSP
-void tspBruteForce(const vector<pair<int, int>>& cities, int numCities) {
+void tspBruteForce(const vector<pair<int, int>>& cities) {
 
     // Create a vector representing the initial tour (0, 1, 2, ..., n-1)
     vector<int> tour(numCities);
@@ -60,7 +63,7 @@ void tspBruteForce(const vector<pair<int, int>>& cities, int numCities) {
 
     // Evaluate all possible permutations of the cities
     do {
-        double distance = calcTourDistance(tour, cities, numCities);
+        double distance = calcTourDistance(tour, cities);
         if (distance < minDistance) {
             minDistance = distance;
             minTour = tour;
@@ -81,14 +84,13 @@ void tspBruteForce(const vector<pair<int, int>>& cities, int numCities) {
         cout << "City " << i << ": (" << cities[i].first << ", " << cities[i].second << ")" << endl;
     }
 
-    plotResults(cities, numCities, minTour);
+    plotResults(cities, minTour);
 
 
 }
 
 int main() {
     // Example usage
-    int numCities;
     cout << "Enter the number of cities: ";
     cin >> numCities;
 
@@ -103,7 +105,7 @@ int main() {
         cities[i].second = dist(gen);
     }
 
-    tspBruteForce(cities, numCities);
+    tspBruteForce(cities);
 
     return 0;
 }
