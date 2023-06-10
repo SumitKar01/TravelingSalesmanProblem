@@ -1,113 +1,200 @@
 #include <iostream>
 #include <vector>
 #include <algorithm>
-#include <cmath>
 #include <limits>
-#include <random>
-#include "matplotlibcpp.h"
-
-namespace plt = matplotlibcpp;
+#include <chrono>
 
 using namespace std;
+using namespace std::chrono;
 
-int numCities;
+// Function to calculate the total distance of a route
+int calculateDistance(const vector<int>& route, const vector<vector<int>>& distances) {
+    int totalDistance = 0;
+    int numCities = route.size();
 
-
-// Function to calculate the Euclidean distance between two cities
-double calcDistance(pair<int, int> city1, pair<int, int> city2) {
-    double xDiff = city1.first - city2.first;
-    double yDiff = city1.second - city2.second;
-    return sqrt(pow(xDiff,2) + pow(yDiff, 2));
-}
-
-// Function to calculate the total distance of a tour
-double calcTourDistance(const vector<int>& tour, const vector<pair<int, int>>& cities) {
-    double totalDistance = 0.0;
     for (int i = 0; i < numCities - 1; ++i) {
-        totalDistance += calcDistance(cities[tour[i]], cities[tour[i + 1]]);
+        int currentCity = route[i];
+        int nextCity = route[i + 1];
+
+        totalDistance += distances[currentCity][nextCity];
     }
+
     // Add the distance from the last city back to the starting city
-    totalDistance += calcDistance(cities[tour[numCities - 1]], cities[tour[0]]);
+    totalDistance += distances[route[numCities - 1]][route[0]];
+
     return totalDistance;
 }
-// Plot the cities and the minimum tour
-void plotResults(const vector<pair<int, int>>& cities, vector<int> minTour) {
-    vector<double> xCoords, yCoords;
+
+// Brute Force Approach
+vector<int> findShortestRouteBruteForce(const vector<vector<int>>& distances) {
+    int numCities = distances.size();
+
+    // Create a vector with the initial permutation of cities
+    vector<int> currentRoute(numCities);
     for (int i = 0; i < numCities; ++i) {
-        plt::text(cities[i].first, cities[i].second, to_string(i));
-    }
-    plt::plot(xCoords, yCoords, "bo");
-
-    vector<double> minXTour, minYTour;
-    for (int city : minTour) {
-        minXTour.push_back(cities[city].first);
-        minYTour.push_back(cities[city].second);
-    }
-    minXTour.push_back(cities[minTour[0]].first);
-    minYTour.push_back(cities[minTour[0]].second);
-    plt::plot(minXTour, minYTour, "r-");
-
-    plt::show();
-}
-// Brute force method to solve the TSP
-void tspBruteForce(const vector<pair<int, int>>& cities) {
-
-    // Create a vector representing the initial tour (0, 1, 2, ..., n-1)
-    vector<int> tour(numCities);
-    for (int i = 0; i < numCities; i++) {
-        tour[i] = i;
+        currentRoute[i] = i;
     }
 
-    double minDistance = numeric_limits<double>::max();
-    vector<int> minTour;
+    // Initialize variables for the shortest route and its distance
+    vector<int> shortestRoute = currentRoute;
+    int shortestDistance = calculateDistance(currentRoute, distances);
 
-    // Evaluate all possible permutations of the cities
-    do {
-        double distance = calcTourDistance(tour, cities);
-        if (distance < minDistance) {
-            minDistance = distance;
-            minTour = tour;
+    // Generate all permutations and update the shortest route if necessary
+    while (next_permutation(currentRoute.begin(), currentRoute.end())) {
+        int currentDistance = calculateDistance(currentRoute, distances);
+        if (currentDistance < shortestDistance) {
+            shortestDistance = currentDistance;
+            shortestRoute = currentRoute;
         }
-    } while (next_permutation(tour.begin() + 1, tour.end()));
+    }
 
-    // Output the minimum tour and its distance
-    cout << "Minimum Tour: ";
-    for (int city : minTour) {
-        cout << city << " ";
+    return shortestRoute;
+}
+
+// Greedy Approach
+vector<int> findShortestRouteGreedy(const vector<vector<int>>& distances) {
+    int numCities = distances.size();
+
+    vector<int> route(numCities);
+    for (int i = 0; i < numCities; ++i) {
+        route[i] = i;
+    }
+
+    int startCity = 0;
+    int currentCity = startCity;
+
+    vector<int> shortestRoute = route;
+    int shortestDistance = numeric_limits<int>::max();
+
+    do {
+        int totalDistance = 0;
+        bool validRoute = true;
+
+        for (int i = 0; i < numCities - 1; ++i) {
+            int nextCity = route[i + 1];
+
+            if (distances[currentCity][nextCity] == 0) {
+                validRoute = false;
+                break;
+            }
+
+            totalDistance += distances[currentCity][nextCity];
+            currentCity = nextCity;
+        }
+
+        if (validRoute && distances[currentCity][startCity] != 0) {
+            totalDistance += distances[currentCity][startCity];
+
+            if (totalDistance < shortestDistance) {
+                shortestDistance = totalDistance;
+                shortestRoute = route;
+            }
+        }
+
+    } while (next_permutation(route.begin() + 1, route.end()));
+
+    return shortestRoute;
+}
+
+// Dynamic Programming Approach
+vector<int> findShortestRouteDynamic(const vector<vector<int>>& distances) {
+    int numCities = distances.size();
+    int numSubsets = 1 << numCities;
+
+    vector<vector<int>> dp(numSubsets, vector<int>(numCities, numeric_limits<int>::max()));
+    vector<vector<int>> prev(numSubsets, vector<int>(numCities, -1));
+
+    // Initialize base case for subset containing only the starting city
+    dp[1][0] = 0;
+
+    // Compute the optimal route and distance for each subset of cities
+    for (int subset = 1; subset < numSubsets; ++subset) {
+        for (int lastCity = 0; lastCity < numCities; ++lastCity) {
+            if ((subset & (1 << lastCity)) != 0) {
+                int prevSubset = subset ^ (1 << lastCity);
+
+                for (int currentCity = 0; currentCity < numCities; ++currentCity) {
+                    if (lastCity != currentCity && (subset & (1 << currentCity)) != 0) {
+                        int newDistance = dp[prevSubset][currentCity] + distances[currentCity][lastCity];
+
+                        if (newDistance < dp[subset][lastCity]) {
+                            dp[subset][lastCity] = newDistance;
+                            prev[subset][lastCity] = currentCity;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Find the shortest route by backtracking from the last city
+    int lastCity = 0;
+    int subset = numSubsets - 1;
+    vector<int> shortestRoute(numCities);
+
+    for (int i = numCities - 1; i >= 0; --i) {
+        shortestRoute[i] = lastCity;
+        int prevCity = prev[subset][lastCity];
+        subset ^= (1 << lastCity);
+        lastCity = prevCity;
+    }
+
+    return shortestRoute;
+}
+
+// Helper function to print a vector
+void printVector(const vector<int>& vec) {
+    for (int val : vec) {
+        cout << val << " ";
     }
     cout << endl;
-    cout << "Minimum Distance: " << minDistance << endl;
-
-    // Print the cities' coordinates
-    cout << "Cities' Coordinates:" << endl;
-    for (int i = 0; i < numCities; ++i) {
-        cout << "City " << i << ": (" << cities[i].first << ", " << cities[i].second << ")" << endl;
-
-
-    }
-
-    plotResults(cities, minTour);
-
-
 }
 
 int main() {
-    // Example usage
-    cout << "Enter the number of cities: ";
-    cin >> numCities;
+    // Example input: distances between cities
+    vector<vector<int>> distances = {
+        {0, 2, 9, 10},
+        {1, 0, 6, 4},
+        {15, 7, 0, 8},
+        {6, 3, 12, 0}
+    };
 
-    // Generate random integer coordinates for the cities
-    random_device rd;
-    mt19937 gen(rd());
-    uniform_int_distribution<int> dist(0, 10); // Adjust the range of coordinates as needed
+    // Brute Force
+    cout << "Brute Force Approach:" << endl;
+    auto startTime = high_resolution_clock::now();
+    vector<int> shortestRouteBruteForce = findShortestRouteBruteForce(distances);
+    auto endTime = high_resolution_clock::now();
+    auto duration = duration_cast<milliseconds>(endTime - startTime).count();
+    cout << "Shortest route: ";
+    printVector(shortestRouteBruteForce);
+    cout << "Total distance: " << calculateDistance(shortestRouteBruteForce, distances) << endl;
+    cout << "Time taken by brute force algorithm: " << duration << " milliseconds" << endl;
 
-    vector<pair<int, int>> cities(numCities);
-    for (int i = 0; i < numCities; ++i) {
-        cities[i].first = dist(gen);
-        cities[i].second = dist(gen);
-    }
+    cout << endl;
 
-    tspBruteForce(cities);
+    // Greedy
+    cout << "Greedy Approach:" << endl;
+    startTime = high_resolution_clock::now();
+    vector<int> shortestRouteGreedy = findShortestRouteGreedy(distances);
+    endTime = high_resolution_clock::now();
+    duration = duration_cast<milliseconds>(endTime - startTime).count();
+    cout << "Shortest route: ";
+    printVector(shortestRouteGreedy);
+    cout << "Total distance: " << calculateDistance(shortestRouteGreedy, distances) << endl;
+    cout << "Time taken by greedy algorithm: " << duration << " milliseconds" << endl;
+
+    cout << endl;
+
+    // Dynamic Programming
+    cout << "Dynamic Programming Approach:" << endl;
+    startTime = high_resolution_clock::now();
+    vector<int> shortestRouteDynamic = findShortestRouteDynamic(distances);
+    endTime = high_resolution_clock::now();
+    duration = duration_cast<milliseconds>(endTime - startTime).count();
+    cout << "Shortest route: ";
+    printVector(shortestRouteDynamic);
+    cout << "Total distance: " << calculateDistance(shortestRouteDynamic, distances) << endl;
+    cout << "Time taken by dynamic programming algorithm: " << duration << " milliseconds" << endl;
 
     return 0;
 }
