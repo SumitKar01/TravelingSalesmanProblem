@@ -90,16 +90,28 @@ vector<vector<int>> generateAverageCaseInput(int numCities) {
     return distances;
 }
 
-// Function to generate worst-case input for a given number of cities
+/// Function to generate worst-case input for a given number of cities
 vector<vector<int>> generateWorstCaseInput(int numCities) {
     vector<vector<int>> distances(numCities, vector<int>(numCities, 0));
 
-    // Set large distances between all cities except the first city
-    for (int i = 1; i < numCities; ++i) {
-        distances[0][i] = distances[i][0] = 9999;
+    // Set large distances between adjacent cities in a linear path
+    for (int i = 0; i < numCities - 1; ++i) {
+        distances[i][i + 1] = distances[i + 1][i] = 9999;
     }
 
+    // Set a large distance between the last city and the first city
+    distances[numCities - 1][0] = distances[0][numCities - 1] = 9999;
+
     return distances;
+}
+
+
+// Function to print the route
+void printRoute(const vector<int>& route) {
+    for (int city : route) {
+        cout << city << " -> ";
+    }
+    cout << route[0] << endl;
 }
 
 int main() {
@@ -116,39 +128,47 @@ int main() {
 
         // Brute Force - Best Case
         auto start = high_resolution_clock::now();
-        findShortestRouteBruteForce(bestCaseDistances);
+        vector<int> bestCaseRoute = findShortestRouteBruteForce(bestCaseDistances);
         auto end = high_resolution_clock::now();
         auto durationBestCase = duration_cast<microseconds>(end - start).count();
+
+        cout << "Best Case: " << durationBestCase << " microseconds" << endl;
+        cout << "Shortest Route: ";
+        printRoute(bestCaseRoute);
+        
 
         // Generate average-case input for the current number of cities
         vector<vector<int>> averageCaseDistances = generateAverageCaseInput(numCities);
 
         // Brute Force - Average Case
         start = high_resolution_clock::now();
-        findShortestRouteBruteForce(averageCaseDistances);
+        vector<int> averageCaseRoute = findShortestRouteBruteForce(averageCaseDistances);
         end = high_resolution_clock::now();
         auto durationAverageCase = duration_cast<microseconds>(end - start).count();
+
+        cout << "Average Case: " << durationAverageCase << " microseconds" << endl;
+        cout << "Shortest Route: ";
+        printRoute(averageCaseRoute);
+        
 
         // Generate worst-case input for the current number of cities
         vector<vector<int>> worstCaseDistances = generateWorstCaseInput(numCities);
 
         // Brute Force - Worst Case
         start = high_resolution_clock::now();
-        findShortestRouteBruteForce(worstCaseDistances);
+        vector<int> worstCaseRoute = findShortestRouteBruteForce(worstCaseDistances);
         end = high_resolution_clock::now();
         auto durationWorstCase = duration_cast<microseconds>(end - start).count();
 
-        cout << "Best Case: " << durationBestCase << " microseconds" << endl;
-        cout << "Average Case: " << durationAverageCase << " microseconds" << endl;
         cout << "Worst Case: " << durationWorstCase << " microseconds" << endl;
+        cout << "Shortest Route: ";
+        printRoute(worstCaseRoute);
         cout << endl;
 
         numCitiesList.push_back(numCities);
         bestCaseTimings.push_back(durationBestCase);
         averageCaseTimings.push_back(durationAverageCase);
         worstCaseTimings.push_back(durationWorstCase);
-
-
     }
 
     // Plot the timings
@@ -159,7 +179,6 @@ int main() {
     plt::xlabel("Number of Cities");
     plt::ylabel("Execution Time (microseconds)");
     plt::show();
-
 
     return 0;
 }
