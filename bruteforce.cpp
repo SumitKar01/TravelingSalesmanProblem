@@ -2,7 +2,12 @@
 #include <vector>
 #include <algorithm>
 #include <limits>
+#include <random>
 #include <chrono>
+
+#include "matplotlibcpp.h"
+
+namespace plt = matplotlibcpp;
 
 using namespace std;
 using namespace std::chrono;
@@ -51,150 +56,110 @@ vector<int> findShortestRouteBruteForce(const vector<vector<int>>& distances) {
     return shortestRoute;
 }
 
-// Greedy Approach
-vector<int> findShortestRouteGreedy(const vector<vector<int>>& distances) {
-    int numCities = distances.size();
+// Function to generate best-case input for a given number of cities
+vector<vector<int>> generateBestCaseInput(int numCities) {
+    vector<vector<int>> distances(numCities, vector<int>(numCities, 0));
 
-    vector<int> route(numCities);
+    // Set equal distances between all cities
     for (int i = 0; i < numCities; ++i) {
-        route[i] = i;
+        for (int j = i + 1; j < numCities; ++j) {
+            distances[i][j] = distances[j][i] = 1;
+        }
     }
 
-    int startCity = 0;
-    int currentCity = startCity;
-
-    vector<int> shortestRoute = route;
-    int shortestDistance = numeric_limits<int>::max();
-
-    do {
-        int totalDistance = 0;
-        bool validRoute = true;
-
-        for (int i = 0; i < numCities - 1; ++i) {
-            int nextCity = route[i + 1];
-
-            if (distances[currentCity][nextCity] == 0) {
-                validRoute = false;
-                break;
-            }
-
-            totalDistance += distances[currentCity][nextCity];
-            currentCity = nextCity;
-        }
-
-        if (validRoute && distances[currentCity][startCity] != 0) {
-            totalDistance += distances[currentCity][startCity];
-
-            if (totalDistance < shortestDistance) {
-                shortestDistance = totalDistance;
-                shortestRoute = route;
-            }
-        }
-
-    } while (next_permutation(route.begin() + 1, route.end()));
-
-    return shortestRoute;
+    return distances;
 }
 
-// Dynamic Programming Approach
-vector<int> findShortestRouteDynamic(const vector<vector<int>>& distances) {
-    int numCities = distances.size();
-    int numSubsets = 1 << numCities;
+// Function to generate average-case input for a given number of cities
+vector<vector<int>> generateAverageCaseInput(int numCities) {
+    vector<vector<int>> distances(numCities, vector<int>(numCities, 0));
 
-    vector<vector<int>> dp(numSubsets, vector<int>(numCities, numeric_limits<int>::max()));
-    vector<vector<int>> prev(numSubsets, vector<int>(numCities, -1));
+    // Randomly generate distances between cities
+    random_device rd;
+    mt19937 gen(rd());
+    uniform_int_distribution<> dist(1, 100);
 
-    // Initialize base case for subset containing only the starting city
-    dp[1][0] = 0;
-
-    // Compute the optimal route and distance for each subset of cities
-    for (int subset = 1; subset < numSubsets; ++subset) {
-        for (int lastCity = 0; lastCity < numCities; ++lastCity) {
-            if ((subset & (1 << lastCity)) != 0) {
-                int prevSubset = subset ^ (1 << lastCity);
-
-                for (int currentCity = 0; currentCity < numCities; ++currentCity) {
-                    if (lastCity != currentCity && (subset & (1 << currentCity)) != 0) {
-                        int newDistance = dp[prevSubset][currentCity] + distances[currentCity][lastCity];
-
-                        if (newDistance < dp[subset][lastCity]) {
-                            dp[subset][lastCity] = newDistance;
-                            prev[subset][lastCity] = currentCity;
-                        }
-                    }
-                }
+    for (int i = 0; i < numCities; ++i) {
+        for (int j = 0; j < numCities; ++j) {
+            if (i != j) {
+                distances[i][j] = dist(gen);
             }
         }
     }
 
-    // Find the shortest route by backtracking from the last city
-    int lastCity = 0;
-    int subset = numSubsets - 1;
-    vector<int> shortestRoute(numCities);
-
-    for (int i = numCities - 1; i >= 0; --i) {
-        shortestRoute[i] = lastCity;
-        int prevCity = prev[subset][lastCity];
-        subset ^= (1 << lastCity);
-        lastCity = prevCity;
-    }
-
-    return shortestRoute;
+    return distances;
 }
 
-// Helper function to print a vector
-void printVector(const vector<int>& vec) {
-    for (int val : vec) {
-        cout << val << " ";
+// Function to generate worst-case input for a given number of cities
+vector<vector<int>> generateWorstCaseInput(int numCities) {
+    vector<vector<int>> distances(numCities, vector<int>(numCities, 0));
+
+    // Set large distances between all cities except the first city
+    for (int i = 1; i < numCities; ++i) {
+        distances[0][i] = distances[i][0] = 9999;
     }
-    cout << endl;
+
+    return distances;
 }
 
 int main() {
-    // Example input: distances between cities
-    vector<vector<int>> distances = {
-        {0, 2, 9, 10},
-        {1, 0, 6, 4},
-        {15, 7, 0, 8},
-        {6, 3, 12, 0}
-    };
+    vector<int> numCitiesList;
+    vector<long> bestCaseTimings;
+    vector<long> averageCaseTimings;
+    vector<long> worstCaseTimings;
 
-    // Brute Force
-    cout << "Brute Force Approach:" << endl;
-    auto startTime = high_resolution_clock::now();
-    vector<int> shortestRouteBruteForce = findShortestRouteBruteForce(distances);
-    auto endTime = high_resolution_clock::now();
-    auto duration = duration_cast<milliseconds>(endTime - startTime).count();
-    cout << "Shortest route: ";
-    printVector(shortestRouteBruteForce);
-    cout << "Total distance: " << calculateDistance(shortestRouteBruteForce, distances) << endl;
-    cout << "Time taken by brute force algorithm: " << duration << " milliseconds" << endl;
+    for (int numCities = 1; numCities <= 10; ++numCities) {
+        cout << "Number of Cities: " << numCities << endl;
 
-    cout << endl;
+        // Generate best-case input for the current number of cities
+        vector<vector<int>> bestCaseDistances = generateBestCaseInput(numCities);
 
-    // Greedy
-    cout << "Greedy Approach:" << endl;
-    startTime = high_resolution_clock::now();
-    vector<int> shortestRouteGreedy = findShortestRouteGreedy(distances);
-    endTime = high_resolution_clock::now();
-    duration = duration_cast<milliseconds>(endTime - startTime).count();
-    cout << "Shortest route: ";
-    printVector(shortestRouteGreedy);
-    cout << "Total distance: " << calculateDistance(shortestRouteGreedy, distances) << endl;
-    cout << "Time taken by greedy algorithm: " << duration << " milliseconds" << endl;
+        // Brute Force - Best Case
+        auto start = high_resolution_clock::now();
+        findShortestRouteBruteForce(bestCaseDistances);
+        auto end = high_resolution_clock::now();
+        auto durationBestCase = duration_cast<microseconds>(end - start).count();
 
-    cout << endl;
+        // Generate average-case input for the current number of cities
+        vector<vector<int>> averageCaseDistances = generateAverageCaseInput(numCities);
 
-    // Dynamic Programming
-    cout << "Dynamic Programming Approach:" << endl;
-    startTime = high_resolution_clock::now();
-    vector<int> shortestRouteDynamic = findShortestRouteDynamic(distances);
-    endTime = high_resolution_clock::now();
-    duration = duration_cast<milliseconds>(endTime - startTime).count();
-    cout << "Shortest route: ";
-    printVector(shortestRouteDynamic);
-    cout << "Total distance: " << calculateDistance(shortestRouteDynamic, distances) << endl;
-    cout << "Time taken by dynamic programming algorithm: " << duration << " milliseconds" << endl;
+        // Brute Force - Average Case
+        start = high_resolution_clock::now();
+        findShortestRouteBruteForce(averageCaseDistances);
+        end = high_resolution_clock::now();
+        auto durationAverageCase = duration_cast<microseconds>(end - start).count();
+
+        // Generate worst-case input for the current number of cities
+        vector<vector<int>> worstCaseDistances = generateWorstCaseInput(numCities);
+
+        // Brute Force - Worst Case
+        start = high_resolution_clock::now();
+        findShortestRouteBruteForce(worstCaseDistances);
+        end = high_resolution_clock::now();
+        auto durationWorstCase = duration_cast<microseconds>(end - start).count();
+
+        cout << "Best Case: " << durationBestCase << " microseconds" << endl;
+        cout << "Average Case: " << durationAverageCase << " microseconds" << endl;
+        cout << "Worst Case: " << durationWorstCase << " microseconds" << endl;
+        cout << endl;
+
+        numCitiesList.push_back(numCities);
+        bestCaseTimings.push_back(durationBestCase);
+        averageCaseTimings.push_back(durationAverageCase);
+        worstCaseTimings.push_back(durationWorstCase);
+
+
+    }
+
+    // Plot the timings
+    plt::plot(numCitiesList, bestCaseTimings, "r-");
+    plt::plot(numCitiesList, averageCaseTimings, "g-");
+    plt::plot(numCitiesList, worstCaseTimings, "b-");
+    plt::title("Execution Time vs. Number of Cities");
+    plt::xlabel("Number of Cities");
+    plt::ylabel("Execution Time (microseconds)");
+    plt::show();
+
 
     return 0;
 }
