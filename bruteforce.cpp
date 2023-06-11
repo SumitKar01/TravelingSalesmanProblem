@@ -157,7 +157,7 @@ int main() {
         worstCaseTimings.push_back(durationWorstCase);
     }
 
-    // Plot the timings
+    // Plot timings
     plt::plot(numCitiesList, bestCaseTimings, "r-");
     plt::plot(numCitiesList, averageCaseTimings, "g-");
     plt::plot(numCitiesList, worstCaseTimings, "b-");
